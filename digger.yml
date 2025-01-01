@@ -1,0 +1,45 @@
+projects:
+  - name: core
+    dir: layers/core
+    opentofu: true
+
+workflows:
+  default:
+    env_vars:
+      state:
+        - name: TF_VAR_aws_bucket
+          value_from: AWS_BUCKET
+        - name: AWS_REGION
+          value: "us-east-1"
+        - name: TF_VAR_allowed_providers
+          value_from: PROVIDER_LIST
+    plan:
+      steps:
+        - run: |
+            DIR_NAME=$(basename "$PWD")
+            cat > backend.hcl << EOF
+            bucket = "$AWS_BUCKET"
+            region = "$AWS_REGION"
+            key    = "$DIR_NAME/terraform.tfstate"
+            EOF
+          shell: bash
+        - init:
+            extra_args: ["-backend-config=backend.hcl", "-migrate-state"]
+        - plan
+    apply:
+      steps:
+        - run: |
+            DIR_NAME=$(basename "$PWD")
+            cat > backend.hcl << EOF
+            bucket = "${AWS_BUCKET}"
+            region = "${AWS_REGION}"
+            key    = "${DIR_NAME}/terraform.tfstate"
+            EOF
+          shell: bash
+        - init:
+            extra_args: ["-backend-config=backend.hcl"]
+        - apply
+    workflow_configuration:
+      on_pull_request_pushed: ["digger plan"]
+      on_pull_request_closed: ["digger unlock"] 
+      on_commit_to_default: ["digger unlock"]
