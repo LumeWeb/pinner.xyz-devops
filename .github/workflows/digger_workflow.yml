@@ -19,7 +19,7 @@ jobs:
       statuses: write
     steps:
       - uses: actions/checkout@v4
-      - uses: lumeweb/akash-action@v0.1.4
+      - uses: lumeweb/akash-action@v0.1.5
         with:
           mnemonic: ${{ secrets.AKASH_WALLET_SEED }}
           cert-content: ${{ secrets.AKASH_CERT_CONTENT }}
