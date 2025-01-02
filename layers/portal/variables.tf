@@ -81,7 +81,7 @@ variable "portal_name" {
 variable "portal_domain" {
   description = "Portal domain"
   type        = string
-  default     = "testing.pinner.xyz"
+  default     = "pinner.xyz"
 }
 
 variable "portal_port" {
