@@ -9,7 +9,7 @@ output "renterd_bus_endpoint" {
   value = module.renterd_cluster.bus.dns_fqdn
 }
 
-output "renterd_autopilot_endpoint" {
+/*output "renterd_autopilot_endpoint" {
   description = "Renterd autopilot endpoint"
   value = module.renterd_cluster.autopilot.dns_fqdn
 }
@@ -17,4 +17,4 @@ output "renterd_autopilot_endpoint" {
 output "renterd_workers_endpoints" {
   description = "Renterd workers endpoints"
   value = module.renterd_cluster.workers[*].dns_fqdn
-}
+}*/
