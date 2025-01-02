@@ -8,6 +8,13 @@ projects:
     workflow: portal
     depends_on:
       - core
+  - name: monitoring
+    dir: layers/monitoring
+    opentofu: true
+    workflow: monitoring
+    depends_on:
+      - core
+      - portal
 workflows:
   default:
     env_vars:
@@ -71,6 +78,63 @@ workflows:
           value_from: CLOUDNS_AUTH_ID
         - name: TF_VAR_cloudns_auth_password
           value_from: CLOUDNS_PASSWORD
+    plan:
+      steps:
+        - run: |
+            DIR_NAME=$(basename "$PWD")
+            cat > backend.hcl << EOF
+            bucket = "$AWS_BUCKET"
+            region = "$AWS_REGION"
+            key    = "$DIR_NAME/terraform.tfstate"
+            EOF
+          shell: bash
+        - init:
+            extra_args: [ "-backend-config=backend.hcl", "-migrate-state" ]
+        - plan
+    apply:
+      steps:
+        - run: |
+            DIR_NAME=$(basename "$PWD")
+            cat > backend.hcl << EOF
+            bucket = "${AWS_BUCKET}"
+            region = "${AWS_REGION}"
+            key    = "${DIR_NAME}/terraform.tfstate"
+            EOF
+          shell: bash
+        - init:
+            extra_args: [ "-backend-config=backend.hcl" ]
+        - apply
+    workflow_configuration:
+      on_pull_request_pushed: [ "digger plan" ]
+      on_pull_request_closed: [ "digger unlock" ]
+      on_commit_to_default: [ "digger unlock" ]
+  monitoring:
+    env_vars:
+      state:
+        - name: TF_VAR_aws_bucket
+          value_from: AWS_BUCKET
+        - name: TF_VAR_s3_bucket
+          value_from: AWS_BUCKET
+        - name: AWS_REGION
+          value: "us-east-1"
+        - name: TF_VAR_allowed_providers
+          value_from: PROVIDER_LIST
+        - name: TF_VAR_mysql_root_password
+          value_from: PORTAL_MYSQL_ROOT_PASSWORD
+        - name: TF_VAR_cloudns_auth_id
+          value_from: CLOUDNS_AUTH_ID
+        - name: TF_VAR_cloudns_auth_password
+          value_from: CLOUDNS_PASSWORD
+        - name: TF_VAR_admin_password
+          value_from: MONITORING_ADMIN_PASSWORD
+        - name: TF_VAR_s3_endpoint
+          value_from: AWS_ENDPOINT_URL
+        - name: TF_VAR_aws_access_key_id
+          value_from: AWS_ACCESS_KEY_ID
+        - name: TF_VAR_aws_secret_access_key
+          value_from: AWS_SECRET_ACCESS_KEY
+        - name: TF_VAR_aws_region
+          value: AWS_REGION
     plan:
       steps:
         - run: |
