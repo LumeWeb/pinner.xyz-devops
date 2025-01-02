@@ -67,7 +67,7 @@ module "portal" {
     }
     sia = {
       key     = var.renterd_api_password
-      cluster = true
+      cluster = false
       url     = "http://${module.renterd_cluster.bus.dns_fqdn}"
     }
   }
