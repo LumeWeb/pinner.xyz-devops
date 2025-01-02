@@ -1,6 +1,6 @@
 locals {
   renterd_cluster_bus_dns_name = replace(module.renterd_cluster.bus.dns_fqdn, format(".%s", var.domain_zone), "")
-  renterd_cluster_autopilot_dns_name = replace(module.renterd_cluster.autopilot.dns_fqdn, format(".%s", var.domain_zone), "")
+  //renterd_cluster_autopilot_dns_name = replace(module.renterd_cluster.autopilot.dns_fqdn, format(".%s", var.domain_zone), "")
 }
 
 resource "cloudns_dns_record" "renterd_bus" {
