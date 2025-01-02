@@ -27,7 +27,7 @@ module "portal" {
 
   count = local.portal_instance_count
 
-  name  = "portal"
+  name  = "pinner-portal"
   image = "ghcr.io/lumeweb/akash-portal:base-next-next"
 
   domain      = local.base_domain

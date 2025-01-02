@@ -2,7 +2,7 @@
 module "renterd_cluster" {
   source = "git::https://github.com/LumeWeb/terraform-modules.git//modules/compute/renterd-cluster?ref=develop"
 
-  name = "portal-renterd"
+  name = "pinner-portal-renterd"
 
   environment = local.environment
   base_domain = local.renterd_base_domain
