@@ -13,8 +13,6 @@ workflows:
           value: "us-east-1"
         - name: TF_VAR_allowed_providers
           value_from: PROVIDER_LIST
-        - name: TF_LOG
-          value: "debug"
     plan:
       steps:
         - run: |
