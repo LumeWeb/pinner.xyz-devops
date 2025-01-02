@@ -2,7 +2,7 @@
 module "redis" {
   source = "git::https://github.com/LumeWeb/terraform-modules.git//modules/db/valkey?ref=develop"
 
-  name = "redis"
+  name = "pinner-portal-redis"
 
   image = "ghcr.io/lumeweb/akash-valkey:develop"
 
