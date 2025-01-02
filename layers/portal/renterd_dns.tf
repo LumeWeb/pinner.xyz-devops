@@ -11,7 +11,7 @@ resource "cloudns_dns_record" "renterd_bus" {
   ttl   = "600"
 }
 
-resource "cloudns_dns_record" "renterd_autopilot" {
+/*resource "cloudns_dns_record" "renterd_autopilot" {
   name  =  local.renterd_cluster_autopilot_dns_name
   zone  = var.domain_zone
   type  = "CNAME"
@@ -26,4 +26,4 @@ resource "cloudns_dns_record" "renterd_workers" {
   type  = "CNAME"
   value = module.renterd_cluster.workers[count.index].host
   ttl   = "600"
-}
+}*/
