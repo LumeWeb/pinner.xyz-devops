@@ -11,8 +11,8 @@ locals {
 
 resource "cloudns_dns_record" "portal" {
   count = length(module.portal)
-  name  = local.portal_base_domain
-  zone  = local.base_domain
+  name  = local.portal_subdomain
+  zone  = local.portal_base_domain
   type  = "A"
   value = module.portal[count.index].ip_address
   ttl   = "600"
@@ -21,7 +21,7 @@ resource "cloudns_dns_record" "portal" {
 resource "cloudns_dns_record" "portal_wildcard" {
   count = length(module.portal)
   name  = length(local.portal_subdomain) > 0 ? format("*.%s", local.portal_subdomain) : "*"
-  zone  = local.base_domain
+  zone  = local.portal_base_domain
   type  = "A"
   value = module.portal[count.index].ip_address
   ttl   = "600"
