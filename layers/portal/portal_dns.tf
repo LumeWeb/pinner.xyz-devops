@@ -26,3 +26,4 @@ resource "cloudns_dns_record" "portal_wildcard" {
   value = module.portal[count.index].ip_address
   ttl   = "600"
 }
+
