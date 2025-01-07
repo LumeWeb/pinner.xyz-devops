@@ -42,8 +42,8 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-endpoint-url: ${{ secrets.AWS_ENDPOINT_URL }}
-          upload-plan-destination: "aws"
-          upload-plan-destination-s3-bucket: ${{ secrets.AWS_BUCKET }}
+#          upload-plan-destination: "aws"
+#          upload-plan-destination-s3-bucket: ${{ secrets.AWS_BUCKET }}
           digger-version: v0.6.62
           secrets-context: ${{ toJson(secrets) }}
           variables-context: ${{ toJson(vars) }}
