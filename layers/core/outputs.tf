@@ -28,7 +28,7 @@ output "renterd_endpoint" {
 
 output "renterd_s3_endpoint" {
   description = "Renterd service endpoint"
-  value = module.renterd.s3_fqdn
+  value = "${module.renterd.dns_fqdn}:${module.renterd.s3_port}"
 }
 
 output "base_domain" {

@@ -1,5 +1,5 @@
 module "renterd" {
-  source = "git::https://github.com/LumeWeb/terraform-modules.git//modules/compute/renterd?ref=v0.1.1"
+  source = "git::https://github.com/LumeWeb/terraform-modules.git//modules/compute/renterd?ref=develop"
 
   name              = "pinner-core-renterd"
 
