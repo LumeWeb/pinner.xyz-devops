@@ -70,7 +70,7 @@ workflows:
           value_from: PORTAL_MYSQL_REPL_PASSWORD
         - name: TF_VAR_proxysql_admin_password
           value_from: PORTAL_PROXYSQL_ADMIN_PASSWORD
-        - nane: TF_VAR_renterd_seed
+        - name: TF_VAR_renterd_seed
           value_from: PORTAL_RENTERD_SEED
         - name: TF_VAR_renterd_metrics_password
           value_from: PORTAL_RENTERD_METRICS_PASSWORD
