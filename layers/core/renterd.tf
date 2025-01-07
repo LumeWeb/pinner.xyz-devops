@@ -23,7 +23,7 @@ module "renterd" {
 
   network = {
     http_port  = 80
-    s3_port    = 80
+    s3_port    = 8080
     enable_ssl = false
   }
 
