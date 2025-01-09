@@ -33,6 +33,7 @@ module "portal" {
   domain      = local.base_domain
   portal_name = var.portal_name
   port        = var.portal_port
+  identity    = var.portal_identity
   cluster     = true
 
   resources = {

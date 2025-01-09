@@ -84,6 +84,12 @@ variable "portal_domain" {
   default     = "pinner.xyz"
 }
 
+variable "portal_identity" {
+  description = "Portal identity"
+  type        = string
+  sensitive   = true
+}
+
 variable "portal_port" {
   description = "Portal core port"
   type        = number
