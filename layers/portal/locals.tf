@@ -4,7 +4,7 @@ locals {
   environment = local.core_state.environment
   renterd_base_domain = format("node.%s", local.base_domain)
   placement_attributes = {
-    "lumeweb" = true
+    "organization" = "Hammer Technologies LLC"
   }
   s3_endpoint = local.core_state.renterd_s3_endpoint
 }
