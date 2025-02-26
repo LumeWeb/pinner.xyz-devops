@@ -35,7 +35,7 @@ jobs:
           -R -s -c 'split("\n")[:-1]')
 
           echo "PROVIDER_LIST=${PROVIDERS}" >> $GITHUB_ENV
-      - uses: LumeWeb/digger-action@v0.1.4
+      - uses: LumeWeb/digger-action@develop
         id: digger
         with:
           digger-spec: ${{ inputs.spec }}
