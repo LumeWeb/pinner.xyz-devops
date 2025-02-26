@@ -35,7 +35,7 @@ module "mysql" {
     persistent_storage = {
       size  = 100
       unit  = "Gi"
-      class = "beta3"
+      class = "beta2"
     }
   }
 

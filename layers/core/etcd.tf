@@ -21,7 +21,7 @@ module "etcd" {
     persistent_storage = {
       size  = 10
       unit  = "Gi"
-      class = "beta3"
+      class = "beta2"
     }
 
     placement_attributes = local.placement_attributes

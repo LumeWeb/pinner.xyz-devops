@@ -48,7 +48,7 @@ module "renterd" {
     persistent_storage = {
       size  = 200
       unit  = "Gi"
-      class = "beta3"
+      class = "beta2"
     }
   }
 
