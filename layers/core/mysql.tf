@@ -1,5 +1,5 @@
 module "mysql" {
-  source = "git::https://github.com/LumeWeb/terraform-modules.git//modules/db/mysql?ref=v0.1.1"
+  source = "git::https://github.com/LumeWeb/terraform-modules.git//modules/db/mysql?ref=develop"
 
   name              = "pinner-core-mysql"
   allowed_providers = var.allowed_providers

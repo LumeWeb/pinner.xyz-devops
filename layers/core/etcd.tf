@@ -1,5 +1,5 @@
 module "etcd" {
-  source = "git::https://github.com/LumeWeb/terraform-modules.git//modules/coordination/etcd?ref=v0.1.1"
+  source = "git::https://github.com/LumeWeb/terraform-modules.git//modules/coordination/etcd?ref=develop"
 
   name              = "pinner-core-etcd"
   allowed_providers = var.allowed_providers
