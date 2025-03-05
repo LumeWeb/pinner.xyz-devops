@@ -27,6 +27,8 @@ workflows:
           value_from: PROVIDER_LIST
         - name: TF_VAR_renterd_seed
           value_from: RENTERD_SEED
+        - name: TF_LOG
+          value: "DEBUG"
     plan:
       steps:
         - run: |
