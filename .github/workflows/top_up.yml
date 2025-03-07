@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Monitor and Top Up Akash Deployments
         id: akash-topup
-        uses: lumeweb/akash-topup-action@v0.1.6
+        uses: lumeweb/akash-topup-action@v0.1.7
         with:
           mnemonic: ${{ secrets.AKASH_WALLET_SEED }}
           cert-content: ${{ secrets.AKASH_CERT_CONTENT }}
