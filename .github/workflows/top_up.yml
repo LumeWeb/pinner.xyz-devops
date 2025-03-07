@@ -13,6 +13,7 @@ jobs:
       actions: read
     steps:
       - name: Monitor and Top Up Akash Deployments
+        id: akash-topup
         uses: lumeweb/akash-topup-action@v0.1.6
         with:
           mnemonic: ${{ secrets.AKASH_WALLET_SEED }}
@@ -23,3 +24,78 @@ jobs:
           min-balance-threshold: "1.0"
           top-up-amount: "0.5"
           block-buffer: "1000"
+        continue-on-error: true  # Allow the workflow to continue even if there's an error
+
+      # Parse the summary to check for failed deployments
+      - name: Check for Failed Deployments
+        id: check-failures
+        if: always()
+        run: |
+          # Check if the summary output exists and is valid JSON
+          if [ -n "${{ steps.akash-topup.outputs.summary }}" ] && echo "${{ steps.akash-topup.outputs.summary }}" | jq -e . >/dev/null 2>&1; then
+            # Extract the 'failed' count from the deployments object
+            FAILED_COUNT=$(echo "${{ steps.akash-topup.outputs.summary }}" | jq -r '.deployments.failed // 0')
+          
+            if [ "$FAILED_COUNT" -gt 0 ]; then
+              echo "has_failures=true" >> $GITHUB_OUTPUT
+            else
+              echo "has_failures=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            # If no summary or invalid JSON, consider it a system failure
+            echo "system_failure=true" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      # Send Discord notification when the action completely failed
+      - name: Discord System Failure Notification
+        if: steps.check-failures.outputs.system_failure == 'true'
+        uses: appleboy/discord-action@master
+        with:
+          webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          username: "Akash Monitor Bot"
+          avatar_url: "https://raw.githubusercontent.com/akash-network/website/master/src/assets/akash-logo-primary.svg"
+          color: "#FF0000"
+          message: |
+            **:red_circle: ALERT: Akash Top-up System Failure!**
+            
+            **Repository:** `${{ github.repository }}`
+            **Workflow:** `${{ github.workflow }}`
+            **Run URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+            The action failed to produce a valid summary. Please check the workflow logs for more details.
+
+      # Send Discord notification for deployment failures
+      - name: Discord Deployment Failures Notification
+        if: steps.check-failures.outputs.has_failures == 'true'
+        uses: appleboy/discord-action@master
+        with:
+          webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          username: "Akash Monitor Bot"
+          avatar_url: "https://raw.githubusercontent.com/akash-network/website/master/src/assets/akash-logo-primary.svg"
+          color: "#FFA500"
+          message: |
+            **:warning: Akash Top-up Warning: Deployment Failures**
+            
+            Some deployments failed during the top-up process.
+            
+            **Run URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      # Send successful notification ONLY when deployments are funded
+      - name: Discord Funding Success Notification
+        if: steps.akash-topup.outputs.deployments_funded != '0'
+        uses: appleboy/discord-action@master
+        with:
+          webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          username: "Akash Monitor Bot"
+          avatar_url: "https://raw.githubusercontent.com/akash-network/website/master/src/assets/akash-logo-primary.svg"
+          color: "#00FF00"
+          message: |
+            **:white_check_mark: Akash Deployment Top-up Successful**
+            
+            **Deployments Checked:** ${{ steps.akash-topup.outputs.deployments_checked }}
+            **Deployments Funded:** ${{ steps.akash-topup.outputs.deployments_funded }}
+            **Total Funded:** ${{ steps.akash-topup.outputs.total_funded_akt }} AKT
