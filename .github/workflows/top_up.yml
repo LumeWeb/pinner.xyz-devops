@@ -41,17 +41,35 @@ jobs:
           fi
         shell: bash
 
+      # Download the latest Discord notifier binary
+      - name: Download Discord Notifier
+        id: download-notifier
+        run: |
+          # Get the latest release info
+          LATEST_RELEASE=$(curl -s https://api.github.com/repos/appleboy/drone-discord/releases/latest)
+          VERSION=$(echo "$LATEST_RELEASE" | jq -r '.tag_name' | sed 's/^v//')
+          
+          # Construct the URL for the non-compressed Linux AMD64 binary
+          DOWNLOAD_URL="https://github.com/appleboy/drone-discord/releases/download/v${VERSION}/drone-discord-${VERSION}-linux-amd64"
+          
+          echo "Downloading from: $DOWNLOAD_URL"
+          curl -L -o discord-notifier "$DOWNLOAD_URL"
+          chmod +x discord-notifier
+          
+          echo "Using notifier version: $VERSION"
+        shell: bash
+
       # Send Discord notification for any type of failure
       - name: Discord Failure Notification
         if: steps.parse-summary.outputs.system_failure == 'true' || steps.parse-summary.outputs.failed_count != '0'
-        uses: appleboy/discord-action@v1.1.0
-        with:
-          webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
-          webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
-          username: "Akash Monitor Bot"
-          avatar_url: "https://raw.githubusercontent.com/akash-network/website/master/src/assets/akash-logo-primary.svg"
-          color: "#FFA500"
-          message: |
+        env:
+          GITHUB: true
+          WEBHOOK_ID: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          WEBHOOK_TOKEN: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          USERNAME: "Akash Monitor Bot"
+          AVATAR_URL: "https://raw.githubusercontent.com/akash-network/website/master/src/assets/akash-logo-primary.svg"
+          COLOR: "#FFA500"
+          DISCORD_MESSAGE: |
             **:warning: Akash Top-up Alert: Issues Detected**
             
             **Deployments Checked:** ${{ steps.akash-topup.outputs.deployments_checked }}
@@ -61,21 +79,25 @@ jobs:
             There were issues with the Akash top-up process.
             ${{ steps.parse-summary.outputs.system_failure == 'true' && 'System failure occurred.' || format('Failed to fund {0} deployments.', steps.parse-summary.outputs.failed_count) }}
             
-            **Run URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            **Run ID:** ${{ github.run_id }}
+        run: ./discord-notifier
+        shell: bash
 
       # Send successful notification ONLY when deployments are funded
       - name: Discord Success Notification
         if: steps.akash-topup.outputs.deployments_funded != '0'
-        uses: appleboy/discord-action@v1.1.0
-        with:
-          webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
-          webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
-          username: "Akash Monitor Bot"
-          avatar_url: "https://raw.githubusercontent.com/akash-network/website/master/src/assets/akash-logo-primary.svg"
-          color: "#00FF00"
-          message: |
+        env:
+          GITHUB: true
+          WEBHOOK_ID: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          WEBHOOK_TOKEN: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          USERNAME: "Akash Monitor Bot"
+          AVATAR_URL: "https://raw.githubusercontent.com/akash-network/website/master/src/assets/akash-logo-primary.svg"
+          COLOR: "#00FF00"
+          DISCORD_MESSAGE: |
             **:white_check_mark: Akash Deployment Top-up Successful**
             
             **Deployments Checked:** ${{ steps.akash-topup.outputs.deployments_checked }}
             **Deployments Funded:** ${{ steps.akash-topup.outputs.deployments_funded }}
             **Total Funded:** ${{ steps.akash-topup.outputs.total_funded_akt }} AKT
+        run: ./discord-notifier
+        shell: bash
