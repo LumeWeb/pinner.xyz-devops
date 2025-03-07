@@ -1,0 +1,25 @@
+name: Monitor Akash Deployments
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Run every hour
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Monitor and Top Up Akash Deployments
+        uses: lumeweb/akash-topup-action@v0.1.0
+        with:
+          mnemonic: ${{ secrets.AKASH_WALLET_SEED }}
+          cert-content: ${{ secrets.AKASH_CERT_CONTENT }}
+          cert-id: ${{ secrets.AKASH_CERT_ID }}
+          depositor-account: ${{ secrets.AKASH_DEPOSITOR_ACCOUNT }}
+          fee-account: ${{ secrets.AKASH_FEE_ACCOUNT }}
+          min-balance-threshold: "1.0"
+          top-up-amount: "0.5"
+          block-buffer: "1000"
