@@ -26,30 +26,25 @@ jobs:
           block-buffer: "1000"
         continue-on-error: true  # Allow the workflow to continue even if there's an error
 
-      # Parse the summary to check for failed deployments
-      - name: Check for Failed Deployments
-        id: check-failures
+      # Check for system failure (when the action completely fails)
+      - name: Check System Status
+        id: check-system
         if: always()
         run: |
-          # Check if the summary output exists and is valid JSON
-          if [ -n "${{ steps.akash-topup.outputs.summary }}" ] && echo "${{ steps.akash-topup.outputs.summary }}" | jq -e . >/dev/null 2>&1; then
-            # Extract the 'failed' count from the deployments object
-            FAILED_COUNT=$(echo "${{ steps.akash-topup.outputs.summary }}" | jq -r '.deployments.failed // 0')
-          
-            if [ "$FAILED_COUNT" -gt 0 ]; then
-              echo "has_failures=true" >> $GITHUB_OUTPUT
-            else
-              echo "has_failures=false" >> $GITHUB_OUTPUT
-            fi
-          else
-            # If no summary or invalid JSON, consider it a system failure
+          if [ -z "${{ steps.akash-topup.outputs.summary }}" ] || ! echo "${{ steps.akash-topup.outputs.summary }}" | jq -e . >/dev/null 2>&1; then
             echo "system_failure=true" >> $GITHUB_OUTPUT
+          else
+            echo "system_failure=false" >> $GITHUB_OUTPUT
+          
+            # Also extract the failed count since we have a valid summary
+            FAILED_COUNT=$(echo "${{ steps.akash-topup.outputs.summary }}" | jq -r '.deployments.failed // 0')
+            echo "failed_count=$FAILED_COUNT" >> $GITHUB_OUTPUT
           fi
         shell: bash
 
-      # Send Discord notification when the action completely failed
+      # Send Discord notification for system failure
       - name: Discord System Failure Notification
-        if: steps.check-failures.outputs.system_failure == 'true'
+        if: steps.check-system.outputs.system_failure == 'true'
         uses: appleboy/discord-action@master
         with:
           webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
@@ -68,7 +63,7 @@ jobs:
 
       # Send Discord notification for deployment failures
       - name: Discord Deployment Failures Notification
-        if: steps.check-failures.outputs.has_failures == 'true'
+        if: steps.check-system.outputs.system_failure == 'false' && steps.check-system.outputs.failed_count != '0'
         uses: appleboy/discord-action@v1.1.0
         with:
           webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
@@ -79,13 +74,16 @@ jobs:
           message: |
             **:warning: Akash Top-up Warning: Deployment Failures**
             
-            Some deployments failed during the top-up process.
+            **Deployments Checked:** ${{ steps.akash-topup.outputs.deployments_checked }}
+            **Deployments Funded:** ${{ steps.akash-topup.outputs.deployments_funded }}
+            **Deployments Failed:** ${{ steps.check-system.outputs.failed_count }}
+            **Total Funded:** ${{ steps.akash-topup.outputs.total_funded_akt }} AKT
             
             **Run URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-      # Send successful notification ONLY when deployments are funded
-      - name: Discord Funding Success Notification
-        if: steps.akash-topup.outputs.deployments_funded != '0'
+      # Send successful notification ONLY when deployments are funded AND there are NO failures
+      - name: Discord Success Notification
+        if: steps.check-system.outputs.system_failure == 'false' && steps.akash-topup.outputs.deployments_funded != '0' && steps.check-system.outputs.failed_count == '0'
         uses: appleboy/discord-action@v1.1.0
         with:
           webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
