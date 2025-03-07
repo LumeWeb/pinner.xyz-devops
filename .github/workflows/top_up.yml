@@ -69,7 +69,7 @@ jobs:
       # Send Discord notification for deployment failures
       - name: Discord Deployment Failures Notification
         if: steps.check-failures.outputs.has_failures == 'true'
-        uses: appleboy/discord-action@master
+        uses: appleboy/discord-action@v1.1.0
         with:
           webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
           webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
