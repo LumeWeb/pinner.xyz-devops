@@ -1,9 +1,4 @@
 # Infrastructure Config Variables
-variable "environment" {
-  description = "Deployment environment"
-  type        = string
-  default     = "testing"
-}
 
 variable "base_domain" {
   description = "Base domain for DNS records"

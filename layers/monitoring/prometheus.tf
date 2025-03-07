@@ -1,6 +1,7 @@
 module "prometheus" {
   source = "git::https://github.com/LumeWeb/terraform-modules.git//modules/monitoring/prometheus?ref=develop"
-  name   = "prometheus"
+  name   = "pinner-monitoring-prometheus"
+  environment  = local.environment
 
   allowed_providers    = var.allowed_providers
   placement_attributes = local.placement_attributes

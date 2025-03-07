@@ -1,10 +1,10 @@
 module "mysql" {
   source = "git::https://github.com/LumeWeb/terraform-modules.git//modules/db/mysql?ref=develop"
 
-  name              = "mysql"
+  name              = "pinner-monitoring-mysql"
   allowed_providers = var.allowed_providers
   root_password     = var.mysql_root_password
-  environment       = var.environment
+  environment  = local.environment
   backups_enabled   =  false
 
   metrics_enabled = true

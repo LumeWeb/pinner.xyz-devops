@@ -4,6 +4,9 @@ module "grafana" {
   admin_password = var.metrics_password
   admin_user     = "admin"
 
+  name = "pinner-monitoring-grafana"
+  environment  = local.environment
+
   dns = {
     domain     = format("monitoring.%s", var.base_domain)
     enable_tls = true
