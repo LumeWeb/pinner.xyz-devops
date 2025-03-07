@@ -8,7 +8,7 @@ module "prometheus" {
   persistent_storage = {
     size  = 100
     unit  = "Gi"
-    class = "beta3"
+    class = "beta2"
   }
 
   prometheus_admin_password = var.prometheus_admin_password
