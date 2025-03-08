@@ -23,44 +23,47 @@ jobs:
           fee-account: ${{ secrets.AKASH_FEE_ACCOUNT }}
           min-balance-threshold: "1.0"
           top-up-amount: "0.5"
-        continue-on-error: true  # Allow the workflow to continue even if there's an error
+        continue-on-error: true
 
-      # Parse the summary to check for failures
+      # Parse the summary to check for actual failures
       - name: Parse Summary
         id: parse-summary
         if: always()
         run: |
-          # Check if the summary output exists and is valid JSON
-          if [ -z "${{ steps.akash-topup.outputs.summary }}" ] || ! echo "${{ steps.akash-topup.outputs.summary }}" | jq -e . >/dev/null 2>&1; then
-            echo "system_failure=true" >> $GITHUB_OUTPUT
-          else
-            # Extract the failed count from the deployments object
-            FAILED_COUNT=$(echo "${{ steps.akash-topup.outputs.summary }}" | jq -r '.deployments.failed // 0')
-            echo "failed_count=$FAILED_COUNT" >> $GITHUB_OUTPUT
-          fi
+          if [ -z "${{ steps.akash-topup.outputs.summary }}" ]; then                                                                                                                                                                               
+            echo "system_failure=true" >> $GITHUB_OUTPUT                                                                                                                                                                                           
+            exit 0                                                                                                                                                                                                                                 
+          fi                                                                                                                                                                                                                                       
+          
+          # Extract values from summary                                                                                                                                                                                                            
+          FAILED_COUNT=$(echo '${{ steps.akash-topup.outputs.summary }}' | jq -r '.deployments.failed // 0')                                                                                                                                       
+          FUNDED_COUNT=$(echo '${{ steps.akash-topup.outputs.summary }}' | jq -r '.deployments.funded // 0')                                                                                                                                       
+          CHECKED_COUNT=$(echo '${{ steps.akash-topup.outputs.summary }}' | jq -r '.deployments.checked // 0')                                                                                                                                     
+          
+          # Only mark as failure if there were actual failures                                                                                                                                                                                     
+          if [ "$FAILED_COUNT" -gt 0 ]; then                                                                                                                                                                                                       
+            echo "has_failures=true" >> $GITHUB_OUTPUT                                                                                                                                                                                             
+          fi                                                                                                                                                                                                                                       
+          
+          echo "failed_count=$FAILED_COUNT" >> $GITHUB_OUTPUT                                                                                                                                                                                      
+          echo "funded_count=$FUNDED_COUNT" >> $GITHUB_OUTPUT                                                                                                                                                                                      
+          echo "checked_count=$CHECKED_COUNT" >> $GITHUB_OUTPUT
         shell: bash
 
-      # Download the latest Discord notifier binary
+      # Download Discord notifier
       - name: Download Discord Notifier
         id: download-notifier
+        if: always()
         run: |
-          # Get the latest release info
-          LATEST_RELEASE=$(curl -s https://api.github.com/repos/appleboy/drone-discord/releases/latest)
-          VERSION=$(echo "$LATEST_RELEASE" | jq -r '.tag_name' | sed 's/^v//')
-          
-          # Construct the URL for the non-compressed Linux AMD64 binary
-          DOWNLOAD_URL="https://github.com/appleboy/drone-discord/releases/download/v${VERSION}/drone-discord-${VERSION}-linux-amd64"
-          
-          echo "Downloading from: $DOWNLOAD_URL"
-          curl -L -o discord-notifier "$DOWNLOAD_URL"
-          chmod +x discord-notifier
-          
-          echo "Using notifier version: $VERSION"
-        shell: bash
+          LATEST_RELEASE=$(curl -s https://api.github.com/repos/appleboy/drone-discord/releases/latest)                                                                                                                                            
+          VERSION=$(echo "$LATEST_RELEASE" | jq -r '.tag_name' | sed 's/^v//')                                                                                                                                                                     
+          DOWNLOAD_URL="https://github.com/appleboy/drone-discord/releases/download/v${VERSION}/drone-discord-${VERSION}-linux-amd64"                                                                                                              
+          curl -L -o discord-notifier "$DOWNLOAD_URL"                                                                                                                                                                                              
+          chmod +x discord-notifier                                                                                                                                                                                                                
 
-      # Send Discord notification for any type of failure
+      # Send Discord notification only for actual failures
       - name: Discord Failure Notification
-        if: steps.parse-summary.outputs.system_failure == 'true' || steps.parse-summary.outputs.failed_count != '0'
+        if: steps.parse-summary.outputs.has_failures == 'true' || steps.parse-summary.outputs.system_failure == 'true'
         env:
           GITHUB: true
           WEBHOOK_ID: ${{ secrets.DISCORD_WEBHOOK_ID }}
@@ -69,22 +72,22 @@ jobs:
           AVATAR_URL: "https://raw.githubusercontent.com/akash-network/website/master/src/assets/akash-logo-primary.svg"
           COLOR: "#FFA500"
           DISCORD_MESSAGE: |
-            **:warning: Akash Top-up Alert: Issues Detected**
+            **:warning: Akash Top-up Alert: Issues Detected**                                                                                                                                                                                      
             
-            **Deployments Checked:** ${{ steps.akash-topup.outputs.deployments_checked }}
-            **Deployments Funded:** ${{ steps.akash-topup.outputs.deployments_funded }}
-            **Total Funded:** ${{ steps.akash-topup.outputs.total_funded_akt }} AKT
+            **Repository:** ${{ github.repository }}
+            **Deployments Checked:** ${{ steps.parse-summary.outputs.checked_count }}                                                                                                                                                              
+            **Deployments Funded:** ${{ steps.parse-summary.outputs.funded_count }}                                                                                                                                                                
+            **Total Funded:** ${{ steps.akash-topup.outputs.total_funded_akt }} AKT                                                                                                                                                                
             
-            There were issues with the Akash top-up process.
-            ${{ steps.parse-summary.outputs.system_failure == 'true' && 'System failure occurred.' || format('Failed to fund {0} deployments.', steps.parse-summary.outputs.failed_count) }}
+            There were issues with the Akash top-up process.                                                                                                                                                                                       
+            ${{ steps.parse-summary.outputs.system_failure == 'true' && 'System failure occurred.' || format('Failed to fund {0} deployments.', steps.parse-summary.outputs.failed_count) }}                                                       
             
             **Run ID:** ${{ github.run_id }}
         run: ./discord-notifier
-        shell: bash
 
       # Send successful notification ONLY when deployments are funded
       - name: Discord Success Notification
-        if: steps.akash-topup.outputs.deployments_funded != '0'
+        if: steps.parse-summary.outputs.funded_count > '0'
         env:
           GITHUB: true
           WEBHOOK_ID: ${{ secrets.DISCORD_WEBHOOK_ID }}
@@ -93,10 +96,9 @@ jobs:
           AVATAR_URL: "https://raw.githubusercontent.com/akash-network/website/master/src/assets/akash-logo-primary.svg"
           COLOR: "#00FF00"
           DISCORD_MESSAGE: |
-            **:white_check_mark: Akash Deployment Top-up Successful**
+            **:white_check_mark: Akash Deployment Top-up Successful**                                                                                                                                                                              
             
-            **Deployments Checked:** ${{ steps.akash-topup.outputs.deployments_checked }}
-            **Deployments Funded:** ${{ steps.akash-topup.outputs.deployments_funded }}
+            **Deployments Checked:** ${{ steps.parse-summary.outputs.checked_count }}                                                                                                                                                              
+            **Deployments Funded:** ${{ steps.parse-summary.outputs.funded_count }}                                                                                                                                                                
             **Total Funded:** ${{ steps.akash-topup.outputs.total_funded_akt }} AKT
         run: ./discord-notifier
-        shell: bash
